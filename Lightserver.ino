@@ -5,6 +5,10 @@
 #define ON_AIR "on-air"
 #define ON_CAMERA "on-camera"
 
+// define DEBUG to use Serial connection
+#undef DEBUG
+//#define DEBUG 1
+
 char* ssid = MYSSID;
 char* password = MYPASSWORD;
 
@@ -13,10 +17,12 @@ String request;  // stores text of HTTP request
 String state;    // stores state of light
 
 void setup() {
+  #ifdef DEBUG
   Serial.begin(115200);
   while (!Serial) {
     continue;
   }
+  #endif
 
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -28,20 +34,29 @@ void setup() {
   state = "off";
 
   // print wifi connection
+  #ifdef DEBUG
   Serial.printf("\nconnecting to SSID \"%s\"...\n", ssid);
+  #endif
+
   WiFi.begin(ssid, password);
+  //wait until wifi connected
   while (WiFi.status() != WL_CONNECTED) {
     ;
   }
+
+  #ifdef DEBUG
   Serial.println("Connected to Wifi");
   Serial.printf("IP Address: %s", WiFi.localIP().toString());
+  #endif
   server.begin();
 }
 
 void loop() {
   WiFiClient client = server.available();
   if (client) {
+    #ifdef DEBUG
     Serial.println("client detected");
+    #endif
 
     while (client.available() != 0) {
       char nextChar = client.read();
@@ -55,16 +70,22 @@ void loop() {
 }
 
 void handleHTTP(String& request, WiFiClient& client) {
+  #ifdef DEBUG
   Serial.println(request);
+  #endif
   // case where we are dealing with GET request
   if (request.indexOf("GET") == 0) {
+    #ifdef DEBUG
     Serial.println("Get request detected");
+    #endif
     handleGet(request, client);
   }
 
   // case where we are dealing with POST request
   else if (request.indexOf("POST") == 0) {
+    #ifdef DEBUG
     Serial.println("Post request detected");
+    #endif
     handlePost(request, client);
   }
 
@@ -104,8 +125,10 @@ void handlePost(String& request, WiFiClient& client) {
 
   // isolate the request body (some assumpitons about valid JSON being made)
   String requestBody = request.substring(request.indexOf("\n{") + 1);
+  #ifdef DEBUG
   Serial.println("isolated request body:");
   Serial.println(requestBody);
+  #endif
 
   // we only care about the attribute "state"
   int stateIndex = requestBody.indexOf("\"state\":");
@@ -123,7 +146,9 @@ void handlePost(String& request, WiFiClient& client) {
   }
 
   String requestedState = requestBody.substring(openingQuoteIndex + 1, requestBody.indexOf("\"", openingQuoteIndex + 1));
+  #ifdef DEBUG
   Serial.printf("state: %s", requestedState);
+  #endif
 
   // malformed request if state value is not equal to one of our specified states
   if (!(updateState(requestedState))) {
@@ -162,7 +187,9 @@ void sendJsonResponse(WiFiClient& client, int code) {
     client.println("HTTP/1.1 200 OK");
   }
   else {
+    #ifdef DEBUG
     Serial.print("Something went wrong! Invalid code.");
+    #endif
     return;
   }
   client.println("Content-Type: application/json");
@@ -187,7 +214,9 @@ bool updateState(String requestedState) {
   }
   if (isStateValid) {
     state = requestedState;
+    #ifdef DEBUG
     Serial.println("state updated");
+    #endif
   }
   return isStateValid;
 }
