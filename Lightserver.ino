@@ -149,7 +149,7 @@ void sendNotFoundError(WiFiClient& client) {
 void sendBadRequestError(WiFiClient& client) {
     client.println("HTTP/1.1 400 Bad Request");
     client.println("Connection: close");
-    client.println("\n{\"Error\":\"400 Bad Request\"}");
+    client.println("\n{\"Error\":\"400 Bad Request\"}\n");
 }
 
 // sends JSON responses for successful GET /api/light and POST /api/light
