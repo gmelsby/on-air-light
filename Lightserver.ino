@@ -69,7 +69,7 @@ void handleGet(String& request, WiFiClient& client) {
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: text/html");
   client.printf("Content-Length: %i\n", responseBody.length());
-  client.println("Connection: Closed");
+  client.println("Connection: close");
   client.println("");
   client.print(responseBody);
 }
@@ -126,13 +126,13 @@ String getRoute(String& request) {
 
 void sendNotFoundError(WiFiClient& client) {
     client.println("HTTP/1.1 404 Not Found");
-    client.println("Connection: Closed");
+    client.println("Connection: close");
     client.println("\n{\"Error\":\"404 Not Found\"}\n");
 }
 
 void sendBadRequestError(WiFiClient& client) {
     client.println("HTTP/1.1 400 Bad Request");
-    client.println("Connection: Closed");
+    client.println("Connection: close");
     client.println("\n{\"Error\":\"400 Bad Request\"}");
 }
 
@@ -151,7 +151,7 @@ void sendJsonResponse(WiFiClient& client, int code) {
   }
   client.println("Content-Type: application/json");
   client.printf("Content-Length: %i\n", responseBody.length());
-  client.println("Connection: Closed");
+  client.println("Connection: close");
   client.println("");
   client.println(responseBody);
 }
