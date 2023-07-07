@@ -1,6 +1,10 @@
 #include <WiFi.h>
 #include "WiFiCredentials.h"
 
+#define OFF "off"
+#define ON_AIR "on-air"
+#define ON_CAMERA "on-camera"
+
 char* ssid = MYSSID;
 char* password = MYPASSWORD;
 
@@ -14,8 +18,16 @@ void setup() {
     continue;
   }
 
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // little led flash
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(1000);
+  digitalWrite(LED_BUILTIN, LOW);
+
   state = "off";
 
+  // print wifi connection
   Serial.printf("\nconnecting to SSID \"%s\"...\n", ssid);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -61,8 +73,15 @@ void handleHTTP(String& request, WiFiClient& client) {
 
 void handleGet(String& request, WiFiClient& client) {
 
-  Serial.printf("Route: %s", getRoute(request));
+  String route = getRoute(request);
 
+  // if we have an API request, send back JSON
+  if (route.equals("/api/light")) {
+    sendJsonResponse(client, 200);
+    return;
+  }
+
+  // otherwise regarless of path send back html
   String responseBody = "<!DOCTYPE html>\n<html><head><title>ESP</title></head><body><h1>Hello world</h1>";
   responseBody += "<p>state: " + state + "</p>";
   responseBody += "</body></html>";
@@ -77,8 +96,8 @@ void handleGet(String& request, WiFiClient& client) {
 void handlePost(String& request, WiFiClient& client) {
   String route = getRoute(request);
   
-  // only want to allow POST operations to /light
-  if (route != "/light") {
+  // only want to allow POST operations to /api/light
+  if (!route.equals("/api/light")) {
     sendNotFoundError(client);
     return;
   }
@@ -103,18 +122,15 @@ void handlePost(String& request, WiFiClient& client) {
     return;
   }
 
-  String stateValue = requestBody.substring(openingQuoteIndex + 1, requestBody.indexOf("\"", openingQuoteIndex + 1));
-  Serial.printf("state: %s", stateValue);
+  String requestedState = requestBody.substring(openingQuoteIndex + 1, requestBody.indexOf("\"", openingQuoteIndex + 1));
+  Serial.printf("state: %s", requestedState);
 
   // malformed request if state value is not equal to one of our specified states
-  if (!(stateValue.equals("off") || stateValue.equals("on-air") || stateValue.equals("on-camera"))) {
+  if (!(updateState(requestedState))) {
     sendBadRequestError(client);
     return;
   }
 
-  // since we have checked the state value we can assign it to state
-  state = stateValue;
-  
   sendJsonResponse(client, 201);
 }
 
@@ -136,7 +152,7 @@ void sendBadRequestError(WiFiClient& client) {
     client.println("\n{\"Error\":\"400 Bad Request\"}");
 }
 
-// sends JSON responses for successful GET /light and POST /light
+// sends JSON responses for successful GET /api/light and POST /api/light
 void sendJsonResponse(WiFiClient& client, int code) {
   String responseBody = "{\"state\": \"" + state + "\"}\n";
   if (code == 201) {
@@ -154,6 +170,26 @@ void sendJsonResponse(WiFiClient& client, int code) {
   client.println("Connection: close");
   client.println("");
   client.println(responseBody);
+}
+
+// turns on and off appropriate lights, returns false if state is not a valid value
+bool updateState(String requestedState) {
+  bool isStateValid = false;
+  if (requestedState.equals(OFF)) {
+    digitalWrite(LED_BUILTIN, LOW);
+    isStateValid = true;
+  } else if (requestedState.equals(ON_AIR)) {
+    digitalWrite(LED_BUILTIN, HIGH);
+    isStateValid = true;
+  } else if (requestedState.equals(ON_CAMERA)) {
+    digitalWrite(LED_BUILTIN, HIGH);
+    isStateValid = true;
+  }
+  if (isStateValid) {
+    state = requestedState;
+    Serial.println("state updated");
+  }
+  return isStateValid;
 }
 
 
