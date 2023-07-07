@@ -75,25 +75,86 @@ void handleGet(String& request, WiFiClient& client) {
 }
 
 void handlePost(String& request, WiFiClient& client) {
-  Serial.printf("Route: %s\n", getRoute(request));
+  String route = getRoute(request);
+  
+  // only want to allow POST operations to /light
+  if (route != "/light") {
+    sendNotFoundError(client);
+    return;
+  }
 
-  int requestBodyStart = request.indexOf("\n{") + 1;
+  // isolate the request body (some assumpitons about valid JSON being made)
+  String requestBody = request.substring(request.indexOf("\n{") + 1);
   Serial.println("isolated request body:");
-  Serial.println(request.substring(requestBodyStart));
-  String responseBody = "{\"value1\": \"hello\", \"value2\": \"world\"}";
-  client.println("HTTP/1.1 201 Created");
-  client.println("Content-Type: application/json");
-  client.printf("Content-Length: %i\n", responseBody.length());
-  client.println("Connection: Closed");
-  client.println("");
-  client.print(responseBody);
+  Serial.println(requestBody);
+
+  // we only care about the attribute "state"
+  int stateIndex = requestBody.indexOf("\"state\":");
+  // if it's not here we just exit out
+  if (stateIndex == -1) {
+    sendBadRequestError(client);
+    return;
+  }
+
+  // if there's no follow up " after the : after "state" request is malformed
+  int openingQuoteIndex = requestBody.indexOf("\"", stateIndex + 8);
+  if (openingQuoteIndex > stateIndex + 9) {
+    sendBadRequestError(client);
+    return;
+  }
+
+  String stateValue = requestBody.substring(openingQuoteIndex + 1, requestBody.indexOf("\"", openingQuoteIndex + 1));
+  Serial.printf("state: %s", stateValue);
+
+  // malformed request if state value is not equal to one of our specified states
+  if (!(stateValue.equals("off") || stateValue.equals("on-air") || stateValue.equals("on-camera"))) {
+    sendBadRequestError(client);
+    return;
+  }
+
+  // since we have checked the state value we can assign it to state
+  state = stateValue;
+  
+  sendJsonResponse(client, 201);
 }
 
 // returns the route from a properly-formatted http request
 String getRoute(String& request) {
   int rootIndex = request.indexOf("/");
   return request.substring(rootIndex, request.indexOf(" ", rootIndex));
-} 
+}
+
+void sendNotFoundError(WiFiClient& client) {
+    client.println("HTTP/1.1 404 Not Found");
+    client.println("Connection: Closed");
+    client.println("\n{\"Error\":\"404 Not Found\"}\n");
+}
+
+void sendBadRequestError(WiFiClient& client) {
+    client.println("HTTP/1.1 400 Bad Request");
+    client.println("Connection: Closed");
+    client.println("\n{\"Error\":\"400 Bad Request\"}");
+}
+
+// sends JSON responses for successful GET /light and POST /light
+void sendJsonResponse(WiFiClient& client, int code) {
+  String responseBody = "{\"state\": \"" + state + "\"}\n";
+  if (code == 201) {
+    client.println("HTTP/1.1 201 Created");
+  }
+  else if (code == 200) {
+    client.println("HTTP/1.1 200 OK");
+  }
+  else {
+    Serial.print("Something went wrong! Invalid code.");
+    return;
+  }
+  client.println("Content-Type: application/json");
+  client.printf("Content-Length: %i\n", responseBody.length());
+  client.println("Connection: Closed");
+  client.println("");
+  client.println(responseBody);
+}
 
 
 
