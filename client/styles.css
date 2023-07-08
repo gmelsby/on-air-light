@@ -14,8 +14,18 @@ h1 {
   margin: auto;
 }
 
-.container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+button {
+  max-width: 10rem;
 }
+
+.container {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+

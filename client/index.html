@@ -4,19 +4,23 @@
     <title>
       placeholder
     </title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body data-state="loading">
     <div class="container">
-      <h1>state: <span id="state">loading...</h1></p>
+      <div>
+        <h1>state: <span id="state">loading...</h1>
+      </div>
+      <div>
+        <select id="state-select">
+          <option value="off">Off</option>
+          <option value="on-air">On Air</option>
+          <option value="on-camera">On Camera</option>
+        </select>
+      </div>
+      <button onclick="submitState()">Change state</button>
     </div>
-    <select id="state-select">
-      <option value="off">Off</option>
-      <option value="on-air">On Air</option>
-      <option value="on-camera">On Camera</option>
-    </select>
-    <button onclick="submitState()">Change state</button>
   </body>
 </html>
 
-<script src="./main.js"></script>
+<script src="main.js"></script>
