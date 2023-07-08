@@ -1,0 +1,21 @@
+body {
+  background-color: grey;
+}
+
+body[data-state="on-air"] {
+  background-color: red;
+}
+
+body[data-state="on-camera"] {
+  background-color: blue;
+}
+
+h1 {
+  margin: auto;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

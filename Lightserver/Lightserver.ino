@@ -15,6 +15,7 @@ char* password = MYPASSWORD;
 WiFiServer server(80);
 String request;  // stores text of HTTP request
 String state;    // stores state of light
+String lightRoute = "/api/light";
 
 void setup() {
   #ifdef DEBUG
@@ -89,6 +90,20 @@ void handleHTTP(String& request, WiFiClient& client) {
     handlePost(request, client);
   }
 
+  // only provides options for the only operational POST route
+  else if (request.indexOf("OPTIONS") == 0 && getRoute(request).equals(lightRoute)) {
+    #ifdef DEBUG
+    Serial.println("Options request detected");
+    #endif
+    client.println("HTTP/1.1 200 OK");
+    client.println("Access-Control-Allow-Origin: *");
+    client.println("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+    client.println("Access-Control-Allow-Headers: *");
+    client.println("Allow: application/json");
+    client.println("Connection: close");
+    client.println("");
+  }
+
   // ideally we should be sending a "method not supported" or "resource not found" code
 }
 
@@ -97,15 +112,22 @@ void handleGet(String& request, WiFiClient& client) {
   String route = getRoute(request);
 
   // if we have an API request, send back JSON
-  if (route.equals("/api/light")) {
+  if (route.equals(lightRoute)) {
     sendJsonResponse(client, 200);
     return;
   }
 
-  // otherwise regarless of path send back html
-  String responseBody = "<!DOCTYPE html>\n<html><head><title>ESP</title></head><body><h1>Hello world</h1>";
-  responseBody += "<p>state: " + state + "</p>";
-  responseBody += "</body></html>";
+  // otherwise regardless of path send back html
+  String responseBody = "<!DOCTYPE html>\n<html><head><title>ESP</title></head><body>";
+  responseBody += "<h1>" + state + "</h1>";
+  responseBody += "</body></html><button onclick=\"postState('off')\">Turn Off</button>";
+  responseBody += "<button onclick=\"postState('on-air')\">On Air</button>";
+  responseBody += "<button onclick=\"postState('on-camera')\">On Camera</button></body></html>";
+  responseBody += "<script>const postState=(newState)=>{fetch('";
+  responseBody += lightRoute;
+  responseBody += "',{method:'POST',headers:{'Accept':'application/json',";
+  responseBody += "'Content-Type':'application/json'},body:JSON.stringify({state: newState})})";
+  responseBody += ".then(()=>window.location.reload()).catch(e=>{console.log(e.message)})}</script>";
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: text/html");
   client.printf("Content-Length: %i\n", responseBody.length());
@@ -118,7 +140,7 @@ void handlePost(String& request, WiFiClient& client) {
   String route = getRoute(request);
   
   // only want to allow POST operations to /api/light
-  if (!route.equals("/api/light")) {
+  if (!route.equals(lightRoute)) {
     sendNotFoundError(client);
     return;
   }
@@ -147,7 +169,7 @@ void handlePost(String& request, WiFiClient& client) {
 
   String requestedState = requestBody.substring(openingQuoteIndex + 1, requestBody.indexOf("\"", openingQuoteIndex + 1));
   #ifdef DEBUG
-  Serial.printf("state: %s", requestedState);
+  Serial.printf("state: %s\n", requestedState);
   #endif
 
   // malformed request if state value is not equal to one of our specified states
@@ -168,12 +190,14 @@ String getRoute(String& request) {
 void sendNotFoundError(WiFiClient& client) {
     client.println("HTTP/1.1 404 Not Found");
     client.println("Connection: close");
+    client.println("Access-Control-Allow-Origin: *");
     client.println("\n{\"Error\":\"404 Not Found\"}\n");
 }
 
 void sendBadRequestError(WiFiClient& client) {
     client.println("HTTP/1.1 400 Bad Request");
     client.println("Connection: close");
+    client.println("Access-Control-Allow-Origin: *");
     client.println("\n{\"Error\":\"400 Bad Request\"}\n");
 }
 
@@ -194,6 +218,8 @@ void sendJsonResponse(WiFiClient& client, int code) {
   }
   client.println("Content-Type: application/json");
   client.printf("Content-Length: %i\n", responseBody.length());
+  // allow fetch requests in browser
+  client.println("Access-Control-Allow-Origin: *");
   client.println("Connection: close");
   client.println("");
   client.println(responseBody);
