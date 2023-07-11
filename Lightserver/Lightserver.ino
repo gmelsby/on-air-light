@@ -9,8 +9,8 @@
 #undef DEBUG
 //#define DEBUG 1
 
-char* ssid = MYSSID;
-char* password = MYPASSWORD;
+const char* ssid = MYSSID;
+const char* password = MYPASSWORD;
 
 WiFiServer server(80);
 String request;  // stores text of HTTP request
@@ -119,15 +119,15 @@ void handleGet(String& request, WiFiClient& client) {
 
   // otherwise regardless of path send back html
   String responseBody = "<!DOCTYPE html>\n<html><head><title>ESP</title></head><body>";
-  responseBody += "<h1>" + state + "</h1>";
-  responseBody += "</body></html><button onclick=\"postState('off')\">Turn Off</button>";
-  responseBody += "<button onclick=\"postState('on-air')\">On Air</button>";
-  responseBody += "<button onclick=\"postState('on-camera')\">On Camera</button></body></html>";
-  responseBody += "<script>const postState=(newState)=>{fetch('";
+  responseBody += "<h1>" + state + "</h1>\
+  </body></html><button onclick=\"postState('off')\">Turn Off</button>\
+  <button onclick=\"postState('on-air')\">On Air</button>\
+  <button onclick=\"postState('on-camera')\">On Camera</button></body></html>\
+  <script>const postState=(newState)=>{fetch('";
   responseBody += lightRoute;
-  responseBody += "',{method:'POST',headers:{'Accept':'application/json',";
-  responseBody += "'Content-Type':'application/json'},body:JSON.stringify({state: newState})})";
-  responseBody += ".then(()=>window.location.reload()).catch(e=>{console.log(e.message)})}</script>";
+  responseBody += "',{method:'POST',headers:{'Accept':'application/json',\
+  'Content-Type':'application/json'},body:JSON.stringify({state: newState})})\
+  .then(()=>window.location.reload()).catch(e=>{console.log(e.message)})}</script>";
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: text/html");
   client.printf("Content-Length: %i\n", responseBody.length());
