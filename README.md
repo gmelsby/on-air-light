@@ -13,6 +13,6 @@ Right now the following endpoints work:
 - `GET /api/light` returns JSON indicating the current state of the light.
 - `POST /api/light` takes a JSON body and updates the state of the light.
 
-The webserver conforms to the HTTP specification enough for well-behaved requests to work as intended. A common design pattern this project avoids is endpoints like `GET /togglelight` that are easier to implement but present issues with browser caching --no non-idempotent GET requests here!
+The webserver conforms to the HTTP specification enough for well-behaved requests to work as intended. A common design pattern this project avoids is endpoints like `GET /togglelight` that are easier to implement but present issues with browser caching and preloading--no non-idempotent GET requests here!
 
 The client folder contains a slightly more complex vanilla JS web app than the one served from the microcontroller itself. My intention is to polish it up and use it as the main way to interface with the controller, either served from the controller or from a different machine. In the event that it is served from a different machine, the appropriate headers for CORS are configured on the server.
