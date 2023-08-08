@@ -5,9 +5,12 @@
 #define ON_AIR "on-air"
 #define ON_CAMERA "on-camera"
 
+#define ON_AIR_PIN 15
+#define ON_CAMERA_PIN 16
+
 // define DEBUG to use Serial connection
 #undef DEBUG
-//#define DEBUG 1
+#define DEBUG 1
 
 const char* ssid = MYSSID;
 const char* password = MYPASSWORD;
@@ -26,11 +29,17 @@ void setup() {
   #endif
 
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ON_AIR_PIN, OUTPUT);
+  pinMode(ON_CAMERA_PIN, OUTPUT);
 
   // little led flash
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(1000);
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(ON_AIR_PIN, HIGH);
+  delay(500);
+  digitalWrite(ON_AIR_PIN, LOW);
+  
+  digitalWrite(ON_CAMERA_PIN, HIGH);
+  delay(500);
+  digitalWrite(ON_CAMERA_PIN, LOW);
 
   state = "off";
 
@@ -229,13 +238,16 @@ void sendJsonResponse(WiFiClient& client, int code) {
 bool updateState(String requestedState) {
   bool isStateValid = false;
   if (requestedState.equals(OFF)) {
-    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(ON_AIR_PIN, LOW);
+    digitalWrite(ON_CAMERA_PIN, LOW);
     isStateValid = true;
   } else if (requestedState.equals(ON_AIR)) {
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(ON_AIR_PIN, HIGH);
+    digitalWrite(ON_CAMERA_PIN, LOW);
     isStateValid = true;
   } else if (requestedState.equals(ON_CAMERA)) {
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(ON_CAMERA_PIN, HIGH);
+    digitalWrite(ON_AIR_PIN, LOW);
     isStateValid = true;
   }
   if (isStateValid) {
