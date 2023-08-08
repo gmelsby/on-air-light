@@ -1,13 +1,20 @@
-const lightAddress = 'LOCAL_IP_ADDRESS/api/light';
+import localIP from "./localIP.js";
+const lightAddress = `http://${localIP}/api/light`;
 
 // akes a GET request to light, returns string of state
 const fetchState = async () => {
   const response = await fetch(lightAddress).catch(e => console.log(e.message));
-  const responseBody = await response.json();
-  if (!response.ok) {
-    throw new Error('issue fetching state');
+  try {
+    const responseBody = await response.json();
+    if (!response.ok) {
+      throw new Error('issue fetching state');
+    }
+    return responseBody['state'];
   }
-  return responseBody['state'];
+  catch (error) {
+    console.error(error);
+    return;
+  }
 }
 
 // makes a POST request to light, returns string of state
@@ -19,7 +26,8 @@ const postState = async (newState) => {
       'Content-Type' : 'application/json',
     },
     body: JSON.stringify({state: newState})
-  }).catch(e => console.log(e.message));
+  })
+  .catch(e => console.log(e.message));
   if (!response.ok) {
     throw new Error('issue changing state');
   }
@@ -28,7 +36,7 @@ const postState = async (newState) => {
 }
 
 // form handler
-const submitState = () => {
+export const submitState = () => {
   console.log('attempting to post');
   postState(document.getElementById('state-select').value)
     .then(newState => {
@@ -46,10 +54,12 @@ const changeState = newState => {
 }
 
 // loads current state on webpage load
-fetchState()
+export function pageLoadFetch() {
+  fetchState()
   .then(newState => {
     changeState(newState);
   })
   .catch(e => {
     console.log(`Error: ${e.message}`);
   });
+}

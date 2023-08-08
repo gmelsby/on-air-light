@@ -23,4 +23,8 @@
   </body>
 </html>
 
-<script src="main.js"></script>
+<script type="module">
+  import { pageLoadFetch, submitState } from './main.js';
+  window.submitState = submitState;
+  window.onload = pageLoadFetch;
+</script>
