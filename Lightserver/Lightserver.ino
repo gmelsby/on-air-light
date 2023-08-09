@@ -28,7 +28,6 @@ void setup() {
   }
   #endif
 
-  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(ON_AIR_PIN, OUTPUT);
   pinMode(ON_CAMERA_PIN, OUTPUT);
 
