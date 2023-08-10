@@ -31,15 +31,6 @@ void setup() {
   pinMode(ON_AIR_PIN, OUTPUT);
   pinMode(ON_CAMERA_PIN, OUTPUT);
 
-  // little led flash
-  digitalWrite(ON_AIR_PIN, HIGH);
-  delay(500);
-  digitalWrite(ON_AIR_PIN, LOW);
-  
-  digitalWrite(ON_CAMERA_PIN, HIGH);
-  delay(500);
-  digitalWrite(ON_CAMERA_PIN, LOW);
-
   state = "off";
 
   // print wifi connection
@@ -47,11 +38,20 @@ void setup() {
   Serial.printf("\nconnecting to SSID \"%s\"...\n", ssid);
   #endif
 
+    // on_air on until wifi connected, then on_camera blink
+  digitalWrite(ON_AIR_PIN, HIGH);
+
   WiFi.begin(ssid, password);
   //wait until wifi connected
   while (WiFi.status() != WL_CONNECTED) {
     ;
   }
+
+  digitalWrite(ON_AIR_PIN, LOW);
+  
+  digitalWrite(ON_CAMERA_PIN, HIGH);
+  delay(500);
+  digitalWrite(ON_CAMERA_PIN, LOW);
 
   #ifdef DEBUG
   Serial.println("Connected to Wifi");
@@ -71,6 +71,9 @@ void loop() {
       char nextChar = client.read();
       request += nextChar;
     }
+    #ifdef DEBUG
+    Serial.printf("Read request: \n%s\n", request);
+    #endif
     handleHTTP(request, client);
     // reset for next client
     client.stop();
